@@ -24,6 +24,7 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 import actionlib
 from actionlib_msgs.msg import *
 from geometry_msgs.msg import Pose, Point, Quaternion
+import tf
 
 class GoToPose():
     def __init__(self):
@@ -39,6 +40,7 @@ class GoToPose():
 
 	# Allow up to 5 seconds for the action server to come up
 	self.move_base.wait_for_server(rospy.Duration(5))
+
 
     def goto(self, pos, quat):
 
@@ -74,10 +76,22 @@ class GoToPose():
         rospy.loginfo("Stop")
         rospy.sleep(1)
 
+
 if __name__ == '__main__':
     try:
         rospy.init_node('nav_test', anonymous=False)
         navigator = GoToPose()
+
+        listener = tf.TransformListener()
+        rate = rospy.Rate(10.0)
+        while not rospy.is_shutdown():
+            try:
+                (position,quaternion) = listener.lookupTransform("/base_link", "/map", rospy.Time(0))
+                print position, quaternion
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                continue
+
+
 
         # Customize the following values so they are appropriate for your location
         position = {'x': 1.22, 'y' : 2.56}
