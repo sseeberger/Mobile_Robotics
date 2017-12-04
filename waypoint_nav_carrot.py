@@ -3,11 +3,11 @@
 # https://github.com/markwsilliman/turtlebot/. 
 
 
-# This program defines 3 waypoint positions in world coordinates for the turtlebot under test to attempt to navigate to. 
+# This program defines 5 waypoint positions in world coordinates for the turtlebot under test to attempt to navigate to. 
 # The program begins by determining the turtlebot's current position in its world coordinate system and then uses these 
-# position values to determine the locations in the world coordinate system of the 3 waypoints defined by the user. The user
-# will thus modify this script prior to running to include the 3 waypoint locations, given as relative x and y distances 
-# from the turtlebot's starting position. Once the world coordinate locations of the 3 waypoints have been calculated, the 
+# position values to determine the locations in the world coordinate system of the 5 waypoints defined by the user. The user
+# will thus modify this script prior to running to include the 5 waypoint locations, given as relative x and y distances 
+# from the turtlebot's starting position. Once the world coordinate locations of the 5 waypoints have been calculated, the 
 # waypoint coordinates are sequentially sent as goals to the turtlebot's move_base node. The turtlebot, in response to receiving
 # a goal, will attempt to then navigate to the specified waypoint location, while avoiding obstacles along the way through 
 # its move_base navigation stack planner (setup upon running gmapping_demo.launch). If the turtlebot is successful in navigating 
@@ -34,42 +34,55 @@ class WaypointNavigation():
 
         self.goal_sent = False
 
-        # What to do when Ctrl-C is input or failure occurs
-        rospy.on_shutdown(self.shutdown)
+    # What to do when Ctrl-C is input or failure occurs
+    rospy.on_shutdown(self.shutdown)
     
-        # Start move_base action server
-        self.move_base = actionlib.SimpleActionClient("move_base", MoveBaseAction)
-        rospy.loginfo("Wait for the action server to come up")
+    # Start move_base action server
+    self.move_base = actionlib.SimpleActionClient("move_base", MoveBaseAction)
+    rospy.loginfo("Wait for the action server to come up")
 
-        # Allow up to 5 seconds for the action server to come up
-        self.move_base.wait_for_server(rospy.Duration(5))
+    # Allow up to 5 seconds for the action server to come up
+    self.move_base.wait_for_server(rospy.Duration(5))
 
 
     def go_to_waypoint(self, pos, quat):
 
-        # Create a goal for the specified waypoint location
-        self.goal_sent = True
-        goal = MoveBaseGoal()
-        goal.target_pose.header.frame_id = 'map'
-        goal.target_pose.header.stamp = rospy.Time.now()
-        goal.target_pose.pose = Pose(Point(pos['x']/carrot_div, pos['y']/carrot_div, 0.000),
-                                 Quaternion(quat['r1'], quat['r2'], quat['r3'], quat['r4']))
+        end_goal_search = 0
+        carrot_div = 1
 
-        # Send move goal to the Turtlebot so it attempts to navigate to the waypoint
-        self.move_base.send_goal(goal)
+        while (not end_goal_search):
 
-        # Allow TurtleBot up to 60 seconds to navigate to the waypoint
-        success = self.move_base.wait_for_result(rospy.Duration(60)) 
+            # Send a goal
+            self.goal_sent = True
+            goal = MoveBaseGoal()
+            goal.target_pose.header.frame_id = 'map'
+            goal.target_pose.header.stamp = rospy.Time.now()
+            goal.target_pose.pose = Pose(Point(pos['x']/carrot_div, pos['y']/carrot_div, 0.000),
+                                     Quaternion(quat['r1'], quat['r2'], quat['r3'], quat['r4']))
 
-        state = self.move_base.get_state()
-        result = False
+            # Send move goal to the Turtlebot so it attempts to navigate to the waypoint
+            self.move_base.send_goal(goal)
 
-        if success and state == GoalStatus.SUCCEEDED:
-            # The turtlebot successfully navigated to the designated waypoint
-            result = True
-        else:
-            # The turtlebot did not successfully navigate to the designated waypoint
-            self.move_base.cancel_goal()
+            # Allow TurtleBot up to 60 seconds to navigate to the waypoint
+            success = self.move_base.wait_for_result(rospy.Duration(60)) 
+
+            state = self.move_base.get_state()
+            result = False
+
+            if success and state == GoalStatus.SUCCEEDED:
+                # The turtlebot successfully navigated to the designated waypoint
+                if carrot_div == 1:
+                    result = True
+                    end_goal_search = 1
+                else:
+                    carrot_div = 1
+            elif carrot_div >= 8:
+                end_goal_search = 1
+                result = False
+                self.move_base.cancel_goal()
+            else:
+                self.move_base.cancel_goal()
+                carrot_div = carrot_div*2
 
         self.goal_sent = False
         return result
@@ -83,17 +96,14 @@ class WaypointNavigation():
 
 if __name__ == '__main__':
     try:
-        # Setup the node
         rospy.init_node('waypoint_nav', anonymous=False)
         april = WaypointNavigation()
 
-        # Define a transform listener to listen for tf transforms
         listener = tf.TransformListener()
         rate = rospy.Rate(10.0)
         while not (listener.frameExists("/base_link") and listener.frameExists("/map")):
             continue
         rospy.sleep(1)
-        # If the transform exists from the robot base coordinate system to the map coordinate system
         if (listener.frameExists("/base_link") and listener.frameExists("/map")): 
             try:
                 # Store the turtlebot's starting position in the global coordinate system in the map_position and map_quaternion variables
@@ -106,11 +116,10 @@ if __name__ == '__main__':
 
 
         # World Coordinates for Waypoint #1
-        position = {'x': -(map_position[0])+3, 'y' : map_position[1]+0.5}  # Modify this line to change the location of Waypoint #1
+        position = {'x': -(map_position[0])+3, 'y' : map_position[1]+0.5}
         quaternion = {'r1' : 0.000, 'r2' : 0.000, 'r3' : 0.000, 'r4' : 1.000}
 
         rospy.loginfo("Go to Waypoint #1 at world coordinate location (%s, %s)", position['x'], position['y'])
-        # Tell april to attempt to navigate to Waypoint #1
         success = april.go_to_waypoint(position, quaternion)
 
         if success:
@@ -123,11 +132,10 @@ if __name__ == '__main__':
 
 
         # World Coordinates for Waypoint #2
-        position = {'x': -(map_position[0])+3, 'y' : map_position[1]+0.5}   # Modify this line to change the location of Waypoint #2
+        position = {'x': 1.22, 'y' : 2.56}
         quaternion = {'r1' : 0.000, 'r2' : 0.000, 'r3' : 0.000, 'r4' : 1.000}
 
         rospy.loginfo("Go to Waypoint #2 at world coordinate location (%s, %s)", position['x'], position['y'])
-        # Tell april to attempt to navigate to Waypoint #2
         success = april.go_to_waypoint(position, quaternion)
 
         if success:
@@ -140,11 +148,10 @@ if __name__ == '__main__':
 
 
         # World Coordinates for Waypoint #3
-        position = {'x': -(map_position[0])+3, 'y' : map_position[1]+0.5}   # Modify this line to change the location of Waypoint #3
+        position = {'x': 1.22, 'y' : 2.56}
         quaternion = {'r1' : 0.000, 'r2' : 0.000, 'r3' : 0.000, 'r4' : 1.000}
 
         rospy.loginfo("Go to Waypoint #3 at world coordinate location (%s, %s)", position['x'], position['y'])
-        # Tell april to attempt to navigate to Waypoint #3
         success = april.go_to_waypoint(position, quaternion)
 
         if success:
