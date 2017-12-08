@@ -34,15 +34,15 @@ class WaypointNavigation():
 
         self.goal_sent = False
 
-    # What to do when Ctrl-C is input or failure occurs
-    rospy.on_shutdown(self.shutdown)
+	# What to do when Ctrl-C is input or failure occurs
+	rospy.on_shutdown(self.shutdown)
     
-    # Start move_base action server
-    self.move_base = actionlib.SimpleActionClient("move_base", MoveBaseAction)
-    rospy.loginfo("Wait for the action server to come up")
+	# Start move_base action server
+	self.move_base = actionlib.SimpleActionClient("move_base", MoveBaseAction)
+	rospy.loginfo("Wait for the action server to come up")
 
-    # Allow up to 5 seconds for the action server to come up
-    self.move_base.wait_for_server(rospy.Duration(5))
+	# Allow up to 5 seconds for the action server to come up
+	self.move_base.wait_for_server(rospy.Duration(5))
 
 
     def go_to_waypoint(self, pos, quat):
@@ -107,16 +107,16 @@ if __name__ == '__main__':
         if (listener.frameExists("/base_link") and listener.frameExists("/map")): 
             try:
                 # Store the turtlebot's starting position in the global coordinate system in the map_position and map_quaternion variables
-                (map_position,map_quaternion) = listener.lookupTransform("/base_link", "/map", rospy.Time(0))
-                print position 
-                print quaternion
+                (map_position,map_quaternion) = listener.lookupTransform("/map", "/base_link", rospy.Time(0))
+                print map_position 
+                print map_quaternion
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 print "Transform Exception Reached!"
 
 
 
         # World Coordinates for Waypoint #1
-        position = {'x': -(map_position[0])+3, 'y' : map_position[1]+0.5}
+        position = {'x': 2.29, 'y' : 1.793}
         quaternion = {'r1' : 0.000, 'r2' : 0.000, 'r3' : 0.000, 'r4' : 1.000}
 
         rospy.loginfo("Go to Waypoint #1 at world coordinate location (%s, %s)", position['x'], position['y'])
@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
 
         # World Coordinates for Waypoint #2
-        position = {'x': 1.22, 'y' : 2.56}
+        position = {'x': 3.4, 'y' : 1.35}
         quaternion = {'r1' : 0.000, 'r2' : 0.000, 'r3' : 0.000, 'r4' : 1.000}
 
         rospy.loginfo("Go to Waypoint #2 at world coordinate location (%s, %s)", position['x'], position['y'])
@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
 
         # World Coordinates for Waypoint #3
-        position = {'x': 1.22, 'y' : 2.56}
+        position = {'x': 1, 'y' : 1.5}
         quaternion = {'r1' : 0.000, 'r2' : 0.000, 'r3' : 0.000, 'r4' : 1.000}
 
         rospy.loginfo("Go to Waypoint #3 at world coordinate location (%s, %s)", position['x'], position['y'])
