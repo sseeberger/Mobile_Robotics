@@ -141,8 +141,8 @@ if __name__ == '__main__':
 		  rospy.loginfo("Number of Unexplored points in Region: (%s)", unexplored)
 		  rospy.loginfo("Contains traversable point: (%s)", traversable)
 		  explore_goal = n  + ((maparea.index(0) - maparea.index(0)%region_size)/region_size)*width + maparea.index(0)%region_size
-		  explore_goal_x = ((explore_goal - explore_goal%width)/width)*resolution #+ pt.x
-		  explore_goal_y = (explore_goal%width)*resolution #+ pt.y
+		  explore_goal_x = (explore_goal%width)*resolution + pt.x
+		  explore_goal_y = ((explore_goal - explore_goal%width)/width)*resolution + pt.y
 		  
 		  rospy.loginfo("explore_goal_x: (%s)", explore_goal_x)
 		  rospy.loginfo("explore_goal_y: (%s)", explore_goal_y)
@@ -173,20 +173,20 @@ if __name__ == '__main__':
         
         
         
-        ## World Coordinates for Waypoint #1
-        #position = {'x': explore_goal_x, 'y' : explore_goal_y}
-        #quaternion = {'r1' : 0.000, 'r2' : 0.000, 'r3' : 0.000, 'r4' : 1.000}
+        # World Coordinates for Waypoint #1
+        position = {'x': explore_goal_x, 'y' : explore_goal_y}
+        quaternion = {'r1' : 0.000, 'r2' : 0.000, 'r3' : 0.000, 'r4' : 1.000}
 
-        #rospy.loginfo("Go to Tag 0 at approximate world coordinate location (%s, %s)", position['x'], position['y'])
-        #success = april.go_to_waypoint(position, quaternion)
+        rospy.loginfo("Go to Tag 0 at approximate world coordinate location (%s, %s)", position['x'], position['y'])
+        success = april.go_to_waypoint(position, quaternion)
 
-        #if success:
-            #rospy.loginfo("April reached Tag 0!")
-        #else:
-            #rospy.loginfo("April failed to reach Tag 0")
+        if success:
+            rospy.loginfo("April reached Tag 0!")
+        else:
+            rospy.loginfo("April failed to reach Tag 0")
 
-        ## Sleep to give the last log messages time to be sent
-        #rospy.sleep(1)
+        # Sleep to give the last log messages time to be sent
+        rospy.sleep(1)
        
 
     except rospy.ROSInterruptException:
