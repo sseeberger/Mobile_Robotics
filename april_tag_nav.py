@@ -110,9 +110,19 @@ def callback(data):
 	    region_size = int(np.ceil((1/resolution)/4))
 	    
 	    rospy.loginfo("Region Size: (%s)", region_size)
+		
+def bumpCallback(data):
+		dir = data.bumper
+		state = data.state
+		if (state)
+			rospy.loginfo("bump")
 	   
 
-
+def scan(q_orig):
+		q_rot = quaternion_from_euler(0,0,2*np.pi)
+		q_new = quaternion_multiply(q_rot, q_orig)
+		return q_new
+		
 
 if __name__ == '__main__':
     try:
@@ -124,6 +134,7 @@ if __name__ == '__main__':
         grid = OccupancyGrid()
         
         rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, callback)
+		rospy.Subscriber("/kobuki_node/events/bumper", BumperEvent, bumpCallback)
         
         rospy.loginfo("Waiting to go... ")
         rospy.sleep(5)
