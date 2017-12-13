@@ -32,6 +32,16 @@ good_goal = 0
 finished_navigating = 0
 all_tags_found = 0
 
+listener = None
+tag_position = None
+tag_quaternion = None
+AprilTag1 = None
+AprilTag2 = None
+AprilTag3 = None
+AprilTag4 = None
+AprilTag5 = None
+
+
 
 class WaypointNavigation():
     def __init__(self):
@@ -64,7 +74,27 @@ class WaypointNavigation():
         # Send move goal to the Turtlebot so it attempts to navigate to the waypoint
         self.move_base.send_goal(goal)
 
+    def found_tag(self):
+      r = rospy.Rate(5)
+      turn_cmd = Twist()
+      turn_cmd.linear.x = 0
+      turn_cmd.angular.z = np.pi/2
       
+      k = 0
+      while (k < 10):
+	self.cmd_vel.publish(turn_cmd)
+	rospy.sleep(0.1)
+	k = k + 1
+	
+      turn_cmd.angular.z = -np.pi/2
+      k = 0
+      while (k < 10):
+	self.cmd_vel.publish(turn_cmd)
+	rospy.sleep(0.1)
+	k = k + 1
+      
+    
+    
     def full_rot(self):
     
       r = rospy.Rate(5)
@@ -77,6 +107,75 @@ class WaypointNavigation():
 	self.cmd_vel.publish(turn_cmd)
 	rospy.sleep(0.1)
 	k = k + 1
+	
+	if (listener.frameExists("/" + AprilTag1.tag_id) and listener.frameExists("/map")): 
+	  try:
+	    # Store the turtlebot's starting position in the global coordinate system in the map_position and map_quaternion variables
+	    (tag_position,tag_quaternion) = listener.lookupTransform("/map", "/" + AprilTag1.tag_id, rospy.Time(0))
+	    rospy.loginfo("The location of %s in world coordinates is", AprilTag1.tag_id)
+	    print tag_position 
+	    print tag_quaternion
+	    AprilTag1.have_pos = 1
+	    AprilTag1.x_pos = tag_position[0]
+	    AprilTag1.y_pos = tag_position[1]
+	  except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+	    print "Transform Exception Reached! Tag 1"
+	      
+	      
+	if (listener.frameExists("/" + AprilTag2.tag_id) and listener.frameExists("/map")): 
+	  try:
+	    # Store the turtlebot's starting position in the global coordinate system in the map_position and map_quaternion variables
+	    (tag_position,tag_quaternion) = listener.lookupTransform("/map", "/" + AprilTag2.tag_id, rospy.Time(0))
+	    rospy.loginfo("The location of %s in world coordinates is", AprilTag2.tag_id)
+	    print tag_position 
+	    print tag_quaternion
+	    AprilTag2.have_pos = 1
+	    AprilTag2.x_pos = tag_position[0]
+	    AprilTag2.y_pos = tag_position[1]
+	  except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+	    print "Transform Exception Reached! Tag 2"
+		  
+	    
+	if (listener.frameExists("/" + AprilTag3.tag_id) and listener.frameExists("/map")): 
+	  try:
+	    # Store the turtlebot's starting position in the global coordinate system in the map_position and map_quaternion variables
+	    (tag_position,tag_quaternion) = listener.lookupTransform("/map", "/" + AprilTag3.tag_id, rospy.Time(0))
+	    rospy.loginfo("The location of %s in world coordinates is", AprilTag3.tag_id)
+	    print tag_position 
+	    print tag_quaternion
+	    AprilTag3.have_pos = 1
+	    AprilTag3.x_pos = tag_position[0]
+	    AprilTag3.y_pos = tag_position[1]
+	  except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+	    print "Transform Exception Reached! Tag 3"
+		  
+	    
+	if (listener.frameExists("/" + AprilTag4.tag_id) and listener.frameExists("/map")): 
+	  try:
+	    # Store the turtlebot's starting position in the global coordinate system in the map_position and map_quaternion variables
+	    (tag_position,tag_quaternion) = listener.lookupTransform("/map", "/" + AprilTag4.tag_id, rospy.Time(0))
+	    rospy.loginfo("The location of %s in world coordinates is", AprilTag4.tag_id)
+	    print tag_position 
+	    print tag_quaternion
+	    AprilTag4.have_pos = 1
+	    AprilTag4.x_pos = tag_position[0]
+	    AprilTag4.y_pos = tag_position[1]
+	  except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+	    print "Transform Exception Reached! Tag 4"
+
+	    
+	if (listener.frameExists("/" + AprilTag5.tag_id) and listener.frameExists("/map")): 
+	  try:
+	    # Store the turtlebot's starting position in the global coordinate system in the map_position and map_quaternion variables
+	    (tag_position,tag_quaternion) = listener.lookupTransform("/map", "/" + AprilTag5.tag_id, rospy.Time(0))
+	    rospy.loginfo("The location of %s in world coordinates is", AprilTag5.tag_id)
+	    print tag_position 
+	    print tag_quaternion
+	    AprilTag5.have_pos = 1
+	    AprilTag5.x_pos = tag_position[0]
+	    AprilTag5.y_pos = tag_position[1]
+	  except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+	    print "Transform Exception Reached! Tag 5"
       
       rospy.sleep(0.5)
       
@@ -134,7 +233,7 @@ def bumpCallback(data):
 if __name__ == '__main__':
     try:
         rospy.init_node('waypoint_nav', anonymous=False)
-        ft_pub = rospy.Publisher('foundIt', Int8, queue_size=1) #publisher for lights and sound
+        ft_pub = rospy.Publisher('foundIt', Int8, queue_size=10) #publisher for lights and sound
         
         april = WaypointNavigation()
         
@@ -320,6 +419,8 @@ if __name__ == '__main__':
 		  if success and state == GoalStatus.SUCCEEDED:
 		    rospy.loginfo("Found %s !", AprilTag1.tag_id)
 		    ft_pub.publish(1)
+		    rospy.sleep(5)
+		    april.found_tag()
 		    AprilTag1.found = 1
 		    AprilTag1.curr_nav = 0
 		    AprilTag2.curr_nav = 1
@@ -342,6 +443,8 @@ if __name__ == '__main__':
 		  if success and state == GoalStatus.SUCCEEDED:
 		    rospy.loginfo("Found %s !", AprilTag2.tag_id)
 		    ft_pub.publish(1)
+		    rospy.sleep(5)
+		    april.found_tag()
 		    AprilTag2.found = 1
 		    AprilTag2.curr_nav = 0
 		    AprilTag3.curr_nav = 1
@@ -363,6 +466,8 @@ if __name__ == '__main__':
 		  if success and state == GoalStatus.SUCCEEDED:
 		    rospy.loginfo("Found %s !", AprilTag3.tag_id)
 		    ft_pub.publish(1)
+		    rospy.sleep(5)
+		    april.found_tag()
 		    AprilTag3.found = 1
 		    AprilTag3.curr_nav = 0
 		    AprilTag4.curr_nav = 1
@@ -385,6 +490,8 @@ if __name__ == '__main__':
 		  if success and state == GoalStatus.SUCCEEDED:
 		    rospy.loginfo("Found %s !", AprilTag4.tag_id)
 		    ft_pub.publish(1)
+		    rospy.sleep(5)
+		    april.found_tag()
 		    AprilTag4.found = 1
 		    AprilTag4.curr_nav = 0
 		    AprilTag5.curr_nav = 1
@@ -406,6 +513,8 @@ if __name__ == '__main__':
 		  if success and state == GoalStatus.SUCCEEDED:
 		    rospy.loginfo("Found %s !", AprilTag5.tag_id)
 		    ft_pub.publish(1)
+		    rospy.sleep(5)
+		    april.found_tag()
 		    AprilTag5.found = 1
 		    AprilTag5.curr_nav = 0
 		    all_tags_found = 1
@@ -428,6 +537,7 @@ if __name__ == '__main__':
 	  rospy.sleep(2)
 	  
 	  ft_pub.publish(0)
+	  finished_navigating = 0
 	  
 	  april.full_rot()
 	  
